@@ -3,6 +3,7 @@ import numpy as np
 import random
 from src.hand_tracker import HandTracker
 from scipy.interpolate import interp1d
+from numpy import interp
 
 WINDOW = "Hand Tracking"
 WINDOW2 = "Rectangle Game"
@@ -31,32 +32,32 @@ def finger_state(points):
     pseudoFixKeyPoint1 = points[2][0]
     if points[3][0] < pseudoFixKeyPoint1 and points[4][0] < pseudoFixKeyPoint1:
         THUMB = True
-        print("Trumb UP")
+        # print("Trumb UP")
         # cv2.putText(frame, "Trumb UP", (points[2][0], points[2][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
     pseudoFixKeyPoint2 = points[6][1]
     if points[7][1] < pseudoFixKeyPoint2 and points[8][1] < pseudoFixKeyPoint2:
         INDEXFINGER = True
-        print("INDEXFINGER")
+        # print("INDEXFINGER")
         # cv2.putText(frame, "INDEXFINGER", (points[6][0], points[6][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
     pseudoFixKeyPoint3 = points[10][1]
     if points[11][1] < pseudoFixKeyPoint3 and points[12][1] < pseudoFixKeyPoint3:
         MIDDLEFINGER = True
-        print("MIDDLEFINGER")
+        # print("MIDDLEFINGER")
         # cv2.putText(frame, "MIDDLEFINGER", (points[10][0], points[10][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
     pseudoFixKeyPoint4 = points[14][1]
 
     if points[15][1] < pseudoFixKeyPoint4 and points[16][1] < pseudoFixKeyPoint4:
         RINGFINGER = True
-        print("RINGFINGER")
+        # print("RINGFINGER")
         # cv2.putText(frame, "RINGFINGER", (points[14][0], points[14][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
     pseudoFixKeyPoint5 = points[18][1]
     if points[19][1] < pseudoFixKeyPoint5 and points[20][1] < pseudoFixKeyPoint5:
         LITTLEFINGER = True
-        print("LITTLEFINGER")
+        # print("LITTLEFINGER")
         # cv2.putText(frame, "LITTLEFINGER", (points[20][0], points[20][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
     return THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 
@@ -81,14 +82,17 @@ def isHandInRectngle(xP,yP,x,y,w,h):
 def mappingPointX(frameCamera,displayScreen,pointX):
     wO = frameCamera.shape[0]
     wN = displayScreen.shape[0]
-    mX = interp1d([0,wO],[0,wN])
-    return int(mX(pointX))
+    # mX = interp1d([0,wO],[0,wN])
+    # return int(mX(pointX))
+    return int(interp(pointX,[0,wO],[0,wN]))
+
 
 def mappingPointY(frameCamera,displayScreen,pointY):
     hO = frameCamera.shape[1]
     hN = displayScreen.shape[1]
-    mY = interp1d([0,hO],[0,hN])
-    return int(mY(pointY))
+    # mY = interp1d([0,hO],[0,hN])
+    # return int(mY(pointY))
+    return int(interp(pointY,[0,hO],[0,hN]))
 
 
 
@@ -133,23 +137,26 @@ detector = HandTracker(
 print("Frame shape: "+ str(frame.shape))
 counter = 0
 
-height = frame.shape[0]
-width = frame.shape[1]
+# height = frame.shape[0]
+# width = frame.shape[1]
+height = 256
+width = 256
 channels = frame.shape[2]
 
 while hasFrame:
     display = np.zeros((height,width,channels),np.uint8)
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
-    newPoints = []
     # if counter==0:
     #     x,y,w,h = randomRectangle(display)
     # counter = counter+1
     if points is not None:
+        newPoints = []
         for point in points:
             x, y = point
             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+
         # mapping new xy point
         for point in points:
             x, y = point
@@ -159,13 +166,15 @@ while hasFrame:
             newPoint.append(newX)
             newPoint.append(newY)
             newPoints.append(newPoint)
-        print("New point: " + str(newPoints))
-        for point in points:
+        # print("Old point: " + str(points))
+        # print("New point: " + str(newPoints))
+
+        for point in newPoints:
             x, y = point
             cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
 
         # track the first finger points[8]
-        xP, yP = points[0]
+        xP, yP = newPoints[0]
         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
         cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
@@ -187,8 +196,8 @@ while hasFrame:
 
         # connection display screen
         for connection in connections:
-            x0, y0 = points[connection[0]]
-            x1, y1 = points[connection[1]]
+            x0, y0 = newPoints[connection[0]]
+            x1, y1 = newPoints[connection[1]]
             cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
 
     cv2.imshow(WINDOW, frame)

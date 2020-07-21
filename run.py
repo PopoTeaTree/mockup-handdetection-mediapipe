@@ -59,7 +59,23 @@ THICKNESS = 2
 #         # cv2.putText(frame, "LITTLEFINGER", (points[20][0], points[20][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 #     return THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 def xyrandom():
-    return x = random.randint(0, 380), y = random.randint(0, 540)
+    x = random.randint(0, 380)
+    y = random.randint(0, 540)
+    return x, y
+
+def randomRectangle(framee):
+    x, y = xyrandom()
+    w = x+100
+    h = y+100
+    cv2.rectangle( framee,(x, y),(w,h),(255,0,0), 1, 8)
+    return x,y,w,h
+
+def isHandInRectngle(xP,yP,x,y,w,h):
+    if x<xP<w and y<yP<h:
+        return True
+    else:
+        return False
+
 
 cv2.namedWindow(WINDOW)
 cv2.namedWindow(WINDOW2)
@@ -100,25 +116,35 @@ detector = HandTracker(
 )
 
 print("Frame shape: "+ str(frame.shape))
-
+counter = 0
 while hasFrame:
     display = np.zeros((480,640,3),np.uint8)
-    # cv2.rectangle( display,(x, y) ,(x+100,y+100),(255,0,0), 1, 8)
-
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
+    if counter==0:
+        x,y,w,h = randomRectangle(display)
+    counter = counter+1
     if points is not None:
+
         for point in points:
             x, y = point
             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-        for point in points:
-            x, y = point
-            cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+        # for point in points:
+        #     x, y = point
+        #     cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+
         # track the first finger points[8]
-        # x, y = points[8]
+        xP, yP = points[8]
         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+        cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+        cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+
+        cv2.rectangle(display,(x, y),(w,h),(255,0,0), 1, 8)
+        isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
+        if isPointIn:
+            cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points,frame)
         # gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame)
@@ -127,10 +153,10 @@ while hasFrame:
             x0, y0 = points[connection[0]]
             x1, y1 = points[connection[1]]
             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
-        for connection in connections:
-            x0, y0 = points[connection[0]]
-            x1, y1 = points[connection[1]]
-            cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+        # for connection in connections:
+        #     x0, y0 = points[connection[0]]
+        #     x1, y1 = points[connection[1]]
+        #     cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
 
     cv2.imshow(WINDOW, frame)
     hasFrame, frame = capture.read()

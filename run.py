@@ -13,51 +13,52 @@ POINT_COLOR = (0, 255, 0)
 CONNECTION_COLOR = (255, 0, 0)
 THICKNESS = 2
 
-# def gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame):
-#     if not THUMB and INDEXFINGER and not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
-#         cv2.putText(frame, "Pointing", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
-#     elif THUMB and INDEXFINGER and not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
-#         cv2.putText(frame, "Gun", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+def gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame):
+    if not THUMB and not INDEXFINGER and not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
+        cv2.putText(frame, "Close", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+    if THUMB and INDEXFINGER and MIDDLEFINGER and RINGFINGER and LITTLEFINGER:
+        cv2.putText(frame, "Open", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
-# def finger_state(points,frame):
-#     # finger state
-#     THUMB = False
-#     INDEXFINGER = False
-#     MIDDLEFINGER = False
-#     RINGFINGER = False
-#     LITTLEFINGER = False
+def finger_state(points):
+    # finger state
+    THUMB = False
+    INDEXFINGER = False
+    MIDDLEFINGER = False
+    RINGFINGER = False
+    LITTLEFINGER = False
 
-#     pseudoFixKeyPoint1 = points[2][0]
-#     if points[3][0] < pseudoFixKeyPoint1 and points[4][0] < pseudoFixKeyPoint1:
-#         THUMB = True
-#         print("Trumb UP")
-#         # cv2.putText(frame, "Trumb UP", (points[2][0], points[2][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
+    pseudoFixKeyPoint1 = points[2][0]
+    if points[3][0] < pseudoFixKeyPoint1 and points[4][0] < pseudoFixKeyPoint1:
+        THUMB = True
+        print("Trumb UP")
+        # cv2.putText(frame, "Trumb UP", (points[2][0], points[2][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
-#     pseudoFixKeyPoint2 = points[6][1]
-#     if points[7][1] < pseudoFixKeyPoint2 and points[8][1] < pseudoFixKeyPoint2:
-#         INDEXFINGER = True
-#         print("INDEXFINGER")
-#         # cv2.putText(frame, "INDEXFINGER", (points[6][0], points[6][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
+    pseudoFixKeyPoint2 = points[6][1]
+    if points[7][1] < pseudoFixKeyPoint2 and points[8][1] < pseudoFixKeyPoint2:
+        INDEXFINGER = True
+        print("INDEXFINGER")
+        # cv2.putText(frame, "INDEXFINGER", (points[6][0], points[6][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
-#     pseudoFixKeyPoint3 = points[10][1]
-#     if points[11][1] < pseudoFixKeyPoint3 and points[12][1] < pseudoFixKeyPoint3:
-#         MIDDLEFINGER = True
-#         print("MIDDLEFINGER")
-#         # cv2.putText(frame, "MIDDLEFINGER", (points[10][0], points[10][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
+    pseudoFixKeyPoint3 = points[10][1]
+    if points[11][1] < pseudoFixKeyPoint3 and points[12][1] < pseudoFixKeyPoint3:
+        MIDDLEFINGER = True
+        print("MIDDLEFINGER")
+        # cv2.putText(frame, "MIDDLEFINGER", (points[10][0], points[10][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
-#     pseudoFixKeyPoint4 = points[14][1]
+    pseudoFixKeyPoint4 = points[14][1]
 
-#     if points[15][1] < pseudoFixKeyPoint4 and points[16][1] < pseudoFixKeyPoint4:
-#         RINGFINGER = True
-#         print("RINGFINGER")
-#         # cv2.putText(frame, "RINGFINGER", (points[14][0], points[14][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
+    if points[15][1] < pseudoFixKeyPoint4 and points[16][1] < pseudoFixKeyPoint4:
+        RINGFINGER = True
+        print("RINGFINGER")
+        # cv2.putText(frame, "RINGFINGER", (points[14][0], points[14][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
 
-#     pseudoFixKeyPoint5 = points[18][1]
-#     if points[19][1] < pseudoFixKeyPoint5 and points[20][1] < pseudoFixKeyPoint5:
-#         LITTLEFINGER = True
-#         print("LITTLEFINGER")
-#         # cv2.putText(frame, "LITTLEFINGER", (points[20][0], points[20][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
-#     return THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
+    pseudoFixKeyPoint5 = points[18][1]
+    if points[19][1] < pseudoFixKeyPoint5 and points[20][1] < pseudoFixKeyPoint5:
+        LITTLEFINGER = True
+        print("LITTLEFINGER")
+        # cv2.putText(frame, "LITTLEFINGER", (points[20][0], points[20][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
+    return THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
+
 def xyrandom():
     x = random.randint(0, 380)
     y = random.randint(0, 540)
@@ -121,11 +122,10 @@ while hasFrame:
     display = np.zeros((480,640,3),np.uint8)
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
-    if counter==0:
-        x,y,w,h = randomRectangle(display)
-    counter = counter+1
+    # if counter==0:
+    #     x,y,w,h = randomRectangle(display)
+    # counter = counter+1
     if points is not None:
-
         for point in points:
             x, y = point
             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
@@ -135,28 +135,28 @@ while hasFrame:
         #     cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
 
         # track the first finger points[8]
-        xP, yP = points[8]
+        xP, yP = points[0]
         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
         cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
         cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
 
-        cv2.rectangle(display,(x, y),(w,h),(255,0,0), 1, 8)
-        isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
-        if isPointIn:
-            cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+        # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
+        # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
+        # if isPointIn:
+        #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
-        # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points,frame)
-        # gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame)
+        THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
+        gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
 
         for connection in connections:
             x0, y0 = points[connection[0]]
             x1, y1 = points[connection[1]]
             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
-        # for connection in connections:
-        #     x0, y0 = points[connection[0]]
-        #     x1, y1 = points[connection[1]]
-        #     cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+        for connection in connections:
+            x0, y0 = points[connection[0]]
+            x1, y1 = points[connection[1]]
+            cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
 
     cv2.imshow(WINDOW, frame)
     hasFrame, frame = capture.read()

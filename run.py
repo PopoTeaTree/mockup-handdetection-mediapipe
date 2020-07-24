@@ -87,6 +87,34 @@ def fingerState_distance_Compare(points):
         LITTLEFINGER = True
     return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 
+def fingerState_distance_ratio(points):
+    # finger state
+    # THUMB = False
+    INDEXFINGER = False
+    MIDDLEFINGER = False
+    RINGFINGER = False
+    LITTLEFINGER = False
+    # Tumb
+    pseudoFixKeyPoint1 = points[2][0]
+    if points[3][0] < pseudoFixKeyPoint1 and points[4][0] < pseudoFixKeyPoint1:
+        THUMB = True
+    # Index finger
+    # print( "Index: " + str(distance.euclidean(points[0], points[8])/distance.euclidean(points[0], points[5])) )
+    if distance.euclidean(points[0], points[8])/distance.euclidean(points[0], points[5]) > 1 :
+        INDEXFINGER = True
+    # Middle finger
+    # print( "Middle: " + str(distance.euclidean(points[0], points[12])/distance.euclidean(points[0], points[9])))
+    if distance.euclidean(points[0], points[12])/distance.euclidean(points[0], points[9]) > 1 :
+        MIDDLEFINGER = True
+    # Ring finger
+    # print( "Ring: " + str(distance.euclidean(points[0], points[16])/distance.euclidean(points[0], points[13])))
+    if distance.euclidean(points[0], points[16])/distance.euclidean(points[0], points[13]) > 1 :
+        RINGFINGER = True
+    # Little finger
+    # print( "little: " + str(distance.euclidean(points[0], points[20])/distance.euclidean(points[0], points[17])))
+    if distance.euclidean(points[0], points[20])/distance.euclidean(points[0], points[17]) > 1 :
+        LITTLEFINGER = True
+    return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 def xyrandom():
     x = random.randint(0, 380)
     y = random.randint(0, 540)
@@ -211,7 +239,7 @@ while hasFrame:
         #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-        INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = fingerState_distance_Compare(points)
+        INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = fingerState_distance_ratio(points)
         gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
 
         # connection camera screen

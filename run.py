@@ -4,6 +4,7 @@ import random
 from src.hand_tracker import HandTracker
 from scipy.interpolate import interp1d
 from numpy import interp
+from scipy.spatial import distance
 
 WINDOW = "Hand Tracking"
 WINDOW2 = "Rectangle Game"
@@ -15,10 +16,10 @@ POINT_COLOR = (0, 255, 0)
 CONNECTION_COLOR = (255, 0, 0)
 THICKNESS = 2
 
-def gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame):
-    if not THUMB and not INDEXFINGER and not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
+def gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame):
+    if not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
         cv2.putText(frame, "Close", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
-    if THUMB and INDEXFINGER and MIDDLEFINGER and RINGFINGER and LITTLEFINGER:
+    if MIDDLEFINGER and RINGFINGER and LITTLEFINGER:
         cv2.putText(frame, "Open", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
 def finger_state(points):
@@ -59,7 +60,32 @@ def finger_state(points):
         LITTLEFINGER = True
         # print("LITTLEFINGER")
         # cv2.putText(frame, "LITTLEFINGER", (points[20][0], points[20][1]+10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 2)
-    return THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
+    return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
+
+def fingerState_distance_Compare(points):
+    # finger state
+    # THUMB = False
+    INDEXFINGER = False
+    MIDDLEFINGER = False
+    RINGFINGER = False
+    LITTLEFINGER = False
+    # Tumb
+    pseudoFixKeyPoint1 = points[2][0]
+    if points[3][0] < pseudoFixKeyPoint1 and points[4][0] < pseudoFixKeyPoint1:
+        THUMB = True
+    # Index finger
+    if distance.euclidean(points[0], points[8]) > distance.euclidean(points[0], points[5]):
+        INDEXFINGER = True
+    # Middle finger
+    if distance.euclidean(points[0], points[12]) > distance.euclidean(points[0], points[9]):
+        MIDDLEFINGER = True
+    # Ring finger
+    if distance.euclidean(points[0], points[16]) > distance.euclidean(points[0], points[13]):
+        RINGFINGER = True
+    # Little finger
+    if distance.euclidean(points[0], points[20]) > distance.euclidean(points[0], points[17]):
+        LITTLEFINGER = True
+    return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 
 def xyrandom():
     x = random.randint(0, 380)
@@ -80,16 +106,16 @@ def isHandInRectngle(xP,yP,x,y,w,h):
         return False
 
 def mappingPointX(frameCamera,displayScreen,pointX):
-    wO = frameCamera.shape[0]
-    wN = displayScreen.shape[0]
+    wO = frameCamera.shape[1]
+    wN = displayScreen.shape[1]
     # mX = interp1d([0,wO],[0,wN])
     # return int(mX(pointX))
     return int(interp(pointX,[0,wO],[0,wN]))
 
 
 def mappingPointY(frameCamera,displayScreen,pointY):
-    hO = frameCamera.shape[1]
-    hN = displayScreen.shape[1]
+    hO = frameCamera.shape[0]
+    hN = displayScreen.shape[0]
     # mY = interp1d([0,hO],[0,hN])
     # return int(mY(pointY))
     return int(interp(pointY,[0,hO],[0,hN]))
@@ -137,10 +163,8 @@ detector = HandTracker(
 print("Frame shape: "+ str(frame.shape))
 counter = 0
 
-# height = frame.shape[0]
-# width = frame.shape[1]
-height = 256
-width = 256
+height = frame.shape[0]
+width = frame.shape[1]
 channels = frame.shape[2]
 
 while hasFrame:
@@ -156,6 +180,7 @@ while hasFrame:
             x, y = point
             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+        # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
 
         # mapping new xy point
         for point in points:
@@ -185,8 +210,9 @@ while hasFrame:
         # if isPointIn:
         #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
 
-        THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-        gesture(THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
+        # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
+        INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = fingerState_distance_Compare(points)
+        gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
 
         # connection camera screen
         for connection in connections:

@@ -5,16 +5,24 @@ from src.hand_tracker import HandTracker
 from scipy.interpolate import interp1d
 from numpy import interp
 from scipy.spatial import distance
+import glob
+from PIL import Image
+import pandas as pd
+from matplotlib import pyplot as plt
+
 
 WINDOW = "Hand Tracking"
 WINDOW2 = "Rectangle Game"
 PALM_MODEL_PATH = "models/palm_detection_builtin.tflite"
 LANDMARK_MODEL_PATH = "models/hand_landmark.tflite"
 ANCHORS_PATH = "models/anchors.csv"
+IMAGES_PATH = "W:/mockup-handDetection/mockup-handdetection-mediapipe/leapGestRecog/09/01_palm/*"
 
 POINT_COLOR = (0, 255, 0)
 CONNECTION_COLOR = (255, 0, 0)
 THICKNESS = 2
+
+
 
 def gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame):
     if not MIDDLEFINGER and not RINGFINGER and not LITTLEFINGER:
@@ -88,6 +96,7 @@ def fingerState_distance_Compare(points):
     return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
 
 def fingerState_distance_ratio(points):
+    distanceFinger = []
     # finger state
     # THUMB = False
     INDEXFINGER = False
@@ -100,21 +109,26 @@ def fingerState_distance_ratio(points):
         THUMB = True
     # Index finger
     # print( "Index: " + str(distance.euclidean(points[0], points[8])/distance.euclidean(points[0], points[5])) )
+    distanceFinger.append(distance.euclidean(points[0], points[8])/distance.euclidean(points[0], points[5]))
     if distance.euclidean(points[0], points[8])/distance.euclidean(points[0], points[5]) > 1 :
         INDEXFINGER = True
     # Middle finger
     # print( "Middle: " + str(distance.euclidean(points[0], points[12])/distance.euclidean(points[0], points[9])))
+    distanceFinger.append(distance.euclidean(points[0], points[12])/distance.euclidean(points[0], points[9]))
     if distance.euclidean(points[0], points[12])/distance.euclidean(points[0], points[9]) > 1 :
         MIDDLEFINGER = True
     # Ring finger
     # print( "Ring: " + str(distance.euclidean(points[0], points[16])/distance.euclidean(points[0], points[13])))
+    distanceFinger.append(distance.euclidean(points[0], points[16])/distance.euclidean(points[0], points[13]))
     if distance.euclidean(points[0], points[16])/distance.euclidean(points[0], points[13]) > 1 :
         RINGFINGER = True
     # Little finger
     # print( "little: " + str(distance.euclidean(points[0], points[20])/distance.euclidean(points[0], points[17])))
+    distanceFinger.append(distance.euclidean(points[0], points[20])/distance.euclidean(points[0], points[17]))
     if distance.euclidean(points[0], points[20])/distance.euclidean(points[0], points[17]) > 1 :
         LITTLEFINGER = True
-    return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER
+    # return INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger
+    return distanceFinger
 def xyrandom():
     x = random.randint(0, 380)
     y = random.randint(0, 540)
@@ -150,14 +164,14 @@ def mappingPointY(frameCamera,displayScreen,pointY):
 
 
 
-cv2.namedWindow(WINDOW)
-cv2.namedWindow(WINDOW2)
-capture = cv2.VideoCapture(0)
+# cv2.namedWindow(WINDOW)
+# cv2.namedWindow(WINDOW2)
+# capture = cv2.VideoCapture(0)
 
-if capture.isOpened():
-    hasFrame, frame = capture.read()
-else:
-    hasFrame = False
+# if capture.isOpened():
+#     hasFrame, frame = capture.read()
+# else:
+#     hasFrame = False
 
 #        8   12  16  20
 #        |   |   |   |
@@ -188,79 +202,96 @@ detector = HandTracker(
     box_enlarge=1.3
 )
 
-print("Frame shape: "+ str(frame.shape))
+# print("Frame shape: "+ str(frame.shape))
 counter = 0
 
-height = frame.shape[0]
-width = frame.shape[1]
-channels = frame.shape[2]
+# height = frame.shape[0]
+# width = frame.shape[1]
+# channels = frame.shape[2]
 
-while hasFrame:
-    display = np.zeros((height,width,channels),np.uint8)
-    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+images = glob.glob('W:/mockup-handDetection/mockup-handdetection-mediapipe/leapGestRecog/09/01_palm/*')
+images = glob.glob(IMAGES_PATH)
+allDistanceFinger = []
+for image in images:
+    img = cv2.imread(image)
+    image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
-    # if counter==0:
-    #     x,y,w,h = randomRectangle(display)
-    # counter = counter+1
     if points is not None:
-        newPoints = []
-        for point in points:
-            x, y = point
-            cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-            # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-        # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
-
-        # mapping new xy point
-        for point in points:
-            x, y = point
-            newPoint = []
-            newX = mappingPointX(frame,display,x)
-            newY = mappingPointY(frame,display,y)
-            newPoint.append(newX)
-            newPoint.append(newY)
-            newPoints.append(newPoint)
-        # print("Old point: " + str(points))
-        # print("New point: " + str(newPoints))
-
-        for point in newPoints:
-            x, y = point
-            cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-
-        # track the first finger points[8]
-        xP, yP = newPoints[0]
-        # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-        # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-        cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-        cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-
-        # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
-        # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
-        # if isPointIn:
-        #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
-
         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-        INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = fingerState_distance_ratio(points)
-        gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
+        distanceFinger = fingerState_distance_ratio(points)
+        # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
+        allDistanceFinger.append(distanceFinger)
 
-        # connection camera screen
-        for connection in connections:
-            x0, y0 = points[connection[0]]
-            x1, y1 = points[connection[1]]
-            cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+data_transposed = zip(allDistanceFinger)
+df = pd.DataFrame(data_transposed, columns=["1", "2", "3", "4"])
 
-        # connection display screen
-        for connection in connections:
-            x0, y0 = newPoints[connection[0]]
-            x1, y1 = newPoints[connection[1]]
-            cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+# while hasFrame:
+#     display = np.zeros((height,width,channels),np.uint8)
+#     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#     points, _ = detector(image)
+#     # if counter==0:
+#     #     x,y,w,h = randomRectangle(display)
+#     # counter = counter+1
+#     if points is not None:
+#         newPoints = []
+#         for point in points:
+#             x, y = point
+#             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+#             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+#         # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
 
-    cv2.imshow(WINDOW, frame)
-    hasFrame, frame = capture.read()
-    cv2.imshow(WINDOW2,display)
+#         # mapping new xy point
+#         for point in points:
+#             x, y = point
+#             newPoint = []
+#             newX = mappingPointX(frame,display,x)
+#             newY = mappingPointY(frame,display,y)
+#             newPoint.append(newX)
+#             newPoint.append(newY)
+#             newPoints.append(newPoint)
+#         # print("Old point: " + str(points))
+#         # print("New point: " + str(newPoints))
 
-    key = cv2.waitKey(1)
-    if key == 27:
-        break
+#         for point in newPoints:
+#             x, y = point
+#             cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
 
-capture.release()
+#         # track the first finger points[8]
+#         xP, yP = newPoints[0]
+#         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+#         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+#         cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+#         cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+
+#         # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
+#         # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
+#         # if isPointIn:
+#         #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+
+#         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
+#         INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
+#         gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
+#         allDistanceFinger.append(distanceFinger)
+
+#         # connection camera screen
+#         for connection in connections:
+#             x0, y0 = points[connection[0]]
+#             x1, y1 = points[connection[1]]
+#             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+
+#         # connection display screen
+#         for connection in connections:
+#             x0, y0 = newPoints[connection[0]]
+#             x1, y1 = newPoints[connection[1]]
+#             cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+
+#     cv2.imshow(WINDOW, frame)
+#     hasFrame, frame = capture.read()
+#     cv2.imshow(WINDOW2,display)
+
+#     key = cv2.waitKey(1)
+#     if key == 27:
+#         break
+
+# capture.release()
 cv2.destroyAllWindows()

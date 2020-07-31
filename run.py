@@ -221,9 +221,14 @@ for image in images:
         distanceFinger = fingerState_distance_ratio(points)
         # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
         allDistanceFinger.append(distanceFinger)
+print(allDistanceFinger)
+df = pd.DataFrame(allDistanceFinger, columns=['index', 'middle', 'ring','little'])
+boxplot = df.boxplot(column=['index', 'middle', 'ring','little'])
+boxplot
 
-data_transposed = zip(allDistanceFinger)
-df = pd.DataFrame(data_transposed, columns=["1", "2", "3", "4"])
+fig1, ax1 = plt.subplots()
+ax1.boxplot(df)
+plt.show()
 
 # while hasFrame:
 #     display = np.zeros((height,width,channels),np.uint8)

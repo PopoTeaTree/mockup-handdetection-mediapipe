@@ -10,14 +10,15 @@ from PIL import Image
 import os
 import pandas as pd
 from matplotlib import pyplot as plt
-
+import ast
+import seaborn as sns
+import math
 
 WINDOW = "Hand Tracking"
 WINDOW2 = "Rectangle Game"
 PALM_MODEL_PATH = "models/palm_detection_builtin.tflite"
 LANDMARK_MODEL_PATH = "models/hand_landmark.tflite"
 ANCHORS_PATH = "models/anchors.csv"
-IMAGES_PATH = "W:/mockup-handDetection/mockup-handdetection-mediapipe/GestRecog3/rock/*"
 
 POINT_COLOR = (0, 255, 0)
 CONNECTION_COLOR = (255, 0, 0)
@@ -135,7 +136,8 @@ def xyrandom():
     y = random.randint(0, 540)
     return x, y
 
-def randomRectangle(framee,x,y):
+def randomRectangle(framee):
+    x, y = xyrandom()
     w = x+100
     h = y+100
     cv2.rectangle( framee,(x, y),(w,h),(255,0,0), 1, 8)
@@ -162,158 +164,54 @@ def mappingPointY(frameCamera,displayScreen,pointY):
     # return int(mY(pointY))
     return int(interp(pointY,[0,hO],[0,hN]))
 
-
-
-# cv2.namedWindow(WINDOW)
-# cv2.namedWindow(WINDOW2)
-# capture = cv2.VideoCapture(0)
-
-# if capture.isOpened():
-#     hasFrame, frame = capture.read()
-# else:
-#     hasFrame = False
-
-#        8   12  16  20
-#        |   |   |   |
-#        7   11  15  19
-#    4   |   |   |   |
-#    |   6   10  14  18
-#    3   |   |   |   |
-#    |   5---9---13--17
-#    2    \         /
-#     \    \       /
-#      1    \     /
-#       \    \   /
-#        ------0-
-connections = [
-    (0, 1), (1, 2), (2, 3), (3, 4),
-    (5, 6), (6, 7), (7, 8),
-    (9, 10), (10, 11), (11, 12),
-    (13, 14), (14, 15), (15, 16),
-    (17, 18), (18, 19), (19, 20),
-    (0, 5), (5, 9), (9, 13), (13, 17), (0, 17)
-]
-
-detector = HandTracker(
-    PALM_MODEL_PATH,
-    LANDMARK_MODEL_PATH,
-    ANCHORS_PATH,
-    box_shift=0.2,
-    box_enlarge=1.3
-)
-
 # print("Frame shape: "+ str(frame.shape))
-counter = 0
 
 # height = frame.shape[0]
 # width = frame.shape[1]
 # channels = frame.shape[2]
 
-# Calculate educlidiun distance index middle ring little
-images = glob.glob(IMAGES_PATH)
-allDistanceFinger = []
-for image in images:
-    img = cv2.imread(image)
-    img_rotate_90_clockwise = cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE)
-    image = cv2.cvtColor(img_rotate_90_clockwise, cv2.COLOR_BGR2RGB)
+# read close distance text file
+allDistanceFingerClose = []
+fileRead = open("closeHand-Dis.txt", "r")
+fileLines = fileRead.readlines()
+if fileRead.mode == 'r':
+    for readBuffer in fileLines:
+        readBuffer = ast.literal_eval(readBuffer)
+        allDistanceFingerClose.append(readBuffer)
 
-    # image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    points, _ = detector(image)
-    if points is not None:
-        # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-        distanceFinger = fingerState_distance_ratio(points)
-        # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
-        allDistanceFinger.append(distanceFinger)
+# read open distance text file
+allDistanceFingerOpen = []
+fileRead = open("openHand-Dis.txt", "r")
+fileLines = fileRead.readlines()
+if fileRead.mode == 'r':
+    for readBuffer in fileLines:
+        readBuffer = ast.literal_eval(readBuffer)
+        allDistanceFingerOpen.append(readBuffer)
 
-df = pd.DataFrame(allDistanceFinger, columns=['index', 'middle', 'ring','little'])
-print(df.describe())
-# boxplot = df.boxplot(column=['index', 'middle', 'ring','little'])
-# boxplot
-colors = ['red', 'tan', 'lime','blue']
-labels= ['index', 'middle', 'ring','little']
 
-kwargs = dict(alpha=0.5, bins=100,histtype='bar')
+dfOpen = pd.DataFrame(allDistanceFingerOpen, columns=['index', 'middle', 'ring','little'])
+dfClose = pd.DataFrame(allDistanceFingerClose, columns=['index', 'middle', 'ring','little'])
+print("   Open hand: \n" + str(dfOpen.describe()))
+print("\n   Close hand: \n" + str(dfClose.describe()))
 
-# plt.hist(df['index'], **kwargs, color='g', label='indexFinger')
-# plt.hist(df['middle'], **kwargs, color='b', label='middleFinger')
-# plt.hist(df['ring'], **kwargs, color='r', label='ringFinger')
-# plt.hist(df['little'], **kwargs, color='y', label='littleFinger')
+# plt.hist([dfOpen['index'],dfClose['index']],50,density=True,histtype='bar')
 
-plt.hist([df['index'],df['middle'],df['ring'],df['little']],10,density=True,histtype='bar',
-color=colors,label=labels, density=1)
+
+# Draw the density plot
+sns.distplot(dfOpen['little'],hist = False, kde = True, kde_kws = {'linewidth': 3}, label = 'open')
+sns.distplot(dfClose['little'],hist = False, kde = True, kde_kws = {'linewidth': 3}, label = 'close')
+
+# Method 1: on the same Axis
+# sns.distplot( dfOpen["index"] , color="skyblue", label="Open")
+# sns.distplot( dfClose["index"] , color="red", label="Close")
+
+# plt.hist([dfOpen["index"],dfClose["index"]],10,density=True,histtype='bar',label=["open","close"])
+
+# Plot formatting
+plt.title('Open-Close hand distance')
+
 plt.legend()
 plt.show()
 
-
-# while hasFrame:
-#     display = np.zeros((height,width,channels),np.uint8)
-#     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-#     points, _ = detector(image)
-#     # if counter==0:
-#     #     x,y,w,h = randomRectangle(display)
-#     # counter = counter+1
-#     if points is not None:
-#         newPoints = []
-#         for point in points:
-#             x, y = point
-#             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-#         # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
-
-#         # mapping new xy point
-#         for point in points:
-#             x, y = point
-#             newPoint = []
-#             newX = mappingPointX(frame,display,x)
-#             newY = mappingPointY(frame,display,y)
-#             newPoint.append(newX)
-#             newPoint.append(newY)
-#             newPoints.append(newPoint)
-#         # print("Old point: " + str(points))
-#         # print("New point: " + str(newPoints))
-
-#         for point in newPoints:
-#             x, y = point
-#             cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-
-#         # track the first finger points[8]
-#         xP, yP = newPoints[0]
-#         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-#         cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#         cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-
-#         # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
-#         # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
-#         # if isPointIn:
-#         #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
-
-#         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-#         distanceFinger = fingerState_distance_ratio(points)
-#         # INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
-#         # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
-#         allDistanceFinger.append(distanceFinger)
-#         print("Dis: " + str(allDistanceFinger))
-
-#         # connection camera screen
-#         for connection in connections:
-#             x0, y0 = points[connection[0]]
-#             x1, y1 = points[connection[1]]
-#             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
-
-#         # connection display screen
-#         for connection in connections:
-#             x0, y0 = newPoints[connection[0]]
-#             x1, y1 = newPoints[connection[1]]
-#             cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
-
-#     cv2.imshow(WINDOW, frame)
-#     hasFrame, frame = capture.read()
-#     cv2.imshow(WINDOW2,display)
-
-#     key = cv2.waitKey(1)
-#     if key == 27:
-#         break
-
-capture.release()
-# cv2.destroyAllWindows()
+# capture.release()
+cv2.destroyAllWindows()

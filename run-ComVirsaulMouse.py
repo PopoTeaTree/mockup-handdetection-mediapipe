@@ -167,8 +167,6 @@ capture = cv2.VideoCapture(0)
 
 if capture.isOpened():
     hasFrame, frame = capture.read()
-    frame = cv2.resize(frame, (1920, 1080))
-    hasFrame = cv2.resize(hasFrame, (1920, 1080))
 else:
     hasFrame = False
 
@@ -190,20 +188,18 @@ detector = HandTracker(
 )
 comShape = pyautogui.size()
 print("Frame shape: "+ str(frame.shape))
-print(comShape)
+print("Com shape: "+ str(comShape))
 
 channels = frame.shape[2]
 
 heightCom = comShape[1]
 widthCom = comShape[0]
 
-# height = pyautogui.size()['weidth']
-# width = frame.shape()
-
 while hasFrame:
+    # frame = cv2.resize(frame,(widthCom,heightCom))
+    frame = cv2.flip(frame, 1)
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
-    frame = cv2.resize(frame, (widthCom, heightCom))
     if points is not None:
         newPoints = []
         for point in points:
@@ -224,9 +220,12 @@ while hasFrame:
 
         # track the first finger points[8]
         xP, yP = newPoints[0]
-        # pyautogui.moveTo(xP, yP, duration = 1)
+        pyautogui.moveTo(xP, yP, duration = 1)
 
         INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
+        isClick = gestureClick(MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame)
+        if isClick:
+            pyautogui.click(xP, yP)
 
         # connection camera screen
         for connection in connections:

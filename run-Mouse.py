@@ -8,7 +8,9 @@ from scipy.interpolate import interp1d
 from numpy import interp
 from scipy.spatial import distance
 from PIL import Image
-
+import matplotlib.pyplot as plt
+import pandas as pd
+import statistics
 
 WINDOW = "Hand Tracking"
 WINDOW2 = "Rectangle Game"
@@ -148,19 +150,20 @@ def isHandInRectngle(xP,yP,x,y,w,h):
     else:
         return False
 
-def mappingPointX(frameCamera,wN,pointX):
-    wO = frameCamera.shape[1]
-    # mX = interp1d([0,wO],[0,wN])
+def mappingPointX(wO,wN,pointX):
     # return int(mX(pointX))
     # return int(interp(pointX,[0,wO],[0,wN]))
-    return int((pointX * wN) / wO)
+    # return int((pointX * wN) / wO)
+    return int(( (pointX) / (wO) ) * (wN))
 
-def mappingPointY(frameCamera,hN,pointY):
-    hO = frameCamera.shape[0]
-    # mY = interp1d([0,hO],[0,hN])
+def mappingPointY(hO,hN,pointY):
     # return int(mY(pointY))
     # return int(interp(pointY,[0,hO],[0,hN]))
-    return int((pointY * hN) / hO)
+    # return int((pointY * hN) / hO)
+    return int(( (pointY) / (hO) ) * (hN))
+
+def mappingPoint(OldMax,OldMin,NewMax,NewMin,OldValue):
+    return int( (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin )
 
 cv2.namedWindow(WINDOW)
 capture = cv2.VideoCapture(0)
@@ -196,11 +199,27 @@ channels = frame.shape[2]
 heightCom = comShape[1]
 widthCom = comShape[0]
 
+counter = 0
+pointDataX = []
+pointDataY = []
+
 while hasFrame:
     frame = cv2.flip(frame, 1)
-    frame = cv2.resize(frame,(widthCom, heightCom))
+
+    # crop frame to map screen
+    yCrop=230
+    xCrop=155
+    hCrop=390
+    wCrop=480
+    crop_frame = frame[yCrop:hCrop,xCrop:wCrop]
+    cv2.rectangle(frame,(xCrop,yCrop),(wCrop,hCrop),(255,255,0), 1, 8)
+
+    # plt.imshow(np.asarray(frame))
+    # plt.show()
+
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     points, _ = detector(image)
+
     if points is not None:
         newPoints = []
         for point in points:
@@ -209,25 +228,10 @@ while hasFrame:
             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
         # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
 
-        # mapping new xy point of Computer
-        for point in points:
-            x, y = point
-            newPoint = []
-            newX = mappingPointX(frame,widthCom,x)
-            newY = mappingPointY(frame,heightCom,y)
-            newPoint.append(newX)
-            newPoint.append(newY)
-            newPoints.append(newPoint)
-
-        # track the first finger points[8]
-        xP, yP = newPoints[0]
-        pyautogui.moveTo(xP, yP, duration = 0)
-
-        INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
-        isClick = gestureClick(MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame)
-        if isClick:
-            pass
-            # pyautogui.click(xP, yP)
+        # clicking point shows on camera screen
+        x0, y0 = points[0]
+        cv2.circle(frame, (int(x0), int(y0)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+        cv2.putText(frame, str(int(x0))+","+str(int(y0)), (int(x0)+4, int(y0)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
 
         # connection camera screen
         for connection in connections:
@@ -235,8 +239,42 @@ while hasFrame:
             x1, y1 = points[connection[1]]
             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
 
-    cv2.namedWindow(WINDOW, cv2.WND_PROP_FULLSCREEN)
-    cv2.setWindowProperty(WINDOW,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
+        # track the first finger points[8]
+        xP, yP = points[0]
+        # Check is the wrist point on the rectanger
+        isPointIn = isHandInRectngle(xP,yP,xCrop,yCrop,wCrop,hCrop)
+        print("Crop frame shape: " + str(crop_frame.shape[1]))
+        if isPointIn:
+            print("==========In==============")
+            # map frame wrist to crop
+            xCroped= mappingPoint(wCrop,xCrop,crop_frame.shape[1],0,xP)
+            yCroped = mappingPoint(hCrop,yCrop,crop_frame.shape[0],0,yP)
+            print("mapping point crop frame: " + str(xCroped)+","+str(yCroped))
+            # map wrist to screen
+            xScreen= mappingPoint(crop_frame.shape[1],0,widthCom,0,xCroped)
+            yScreen = mappingPoint(crop_frame.shape[0],0,heightCom,0,yCroped)
+            print("mapping point screen: " + str(xScreen)+","+str(yScreen))
+
+            pointDataX.append(xScreen)
+            pointDataY.append(yScreen)
+
+            if(len(pointDataX) == 3 and len(pointDataY)==3):
+                xMouse = int(statistics.mean(pointDataX))
+                yMouse = int(statistics.mean(pointDataY))
+                # moving mouse
+                pyautogui.moveTo(xMouse, yMouse, duration = 0)
+                # Checking gesture clicking
+                INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
+                isClick = gestureClick(MIDDLEFINGER, RINGFINGER, LITTLEFINGER,frame)
+                if isClick:
+                    pyautogui.click(xMouse, yMouse)
+                pointDataX = []
+                pointDataY = []
+            else:
+                pass
+        else:
+            pass
+
     cv2.imshow(WINDOW, frame)
     hasFrame, frame = capture.read()
 

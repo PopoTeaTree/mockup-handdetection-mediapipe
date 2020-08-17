@@ -164,14 +164,14 @@ def mappingPointY(frameCamera,displayScreen,pointY):
 
 
 
-# cv2.namedWindow(WINDOW)
-# cv2.namedWindow(WINDOW2)
-# capture = cv2.VideoCapture(0)
+cv2.namedWindow(WINDOW)
+cv2.namedWindow(WINDOW2)
+capture = cv2.VideoCapture(0)
 
-# if capture.isOpened():
-#     hasFrame, frame = capture.read()
-# else:
-#     hasFrame = False
+if capture.isOpened():
+    hasFrame, frame = capture.read()
+else:
+    hasFrame = False
 
 #        8   12  16  20
 #        |   |   |   |
@@ -210,110 +210,113 @@ counter = 0
 # channels = frame.shape[2]
 
 # Calculate educlidiun distance index middle ring little
-images = glob.glob(IMAGES_PATH)
-allDistanceFinger = []
-for image in images:
-    img = cv2.imread(image)
-    img_rotate_90_clockwise = cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE)
-    image = cv2.cvtColor(img_rotate_90_clockwise, cv2.COLOR_BGR2RGB)
+# images = glob.glob(IMAGES_PATH)
+# allDistanceFinger = []
+# for image in images:
+#     img = cv2.imread(image)
+#     img_rotate_90_clockwise = cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE)
+#     image = cv2.cvtColor(img_rotate_90_clockwise, cv2.COLOR_BGR2RGB)
 
-    # image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    points, _ = detector(image)
-    if points is not None:
-        # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
-        distanceFinger = fingerState_distance_ratio(points)
-        # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
-        allDistanceFinger.append(distanceFinger)
-
-df = pd.DataFrame(allDistanceFinger, columns=['index', 'middle', 'ring','little'])
-print(df.describe())
-# boxplot = df.boxplot(column=['index', 'middle', 'ring','little'])
-# boxplot
-colors = ['red', 'tan', 'lime','blue']
-labels= ['index', 'middle', 'ring','little']
-
-kwargs = dict(alpha=0.5, bins=100,histtype='bar')
-
-# plt.hist(df['index'], **kwargs, color='g', label='indexFinger')
-# plt.hist(df['middle'], **kwargs, color='b', label='middleFinger')
-# plt.hist(df['ring'], **kwargs, color='r', label='ringFinger')
-# plt.hist(df['little'], **kwargs, color='y', label='littleFinger')
-
-plt.hist([df['index'],df['middle'],df['ring'],df['little']],10,density=True,histtype='bar',
-color=colors,label=labels, density=1)
-plt.legend()
-plt.show()
-
-
-# while hasFrame:
-#     display = np.zeros((height,width,channels),np.uint8)
-#     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#     # image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 #     points, _ = detector(image)
-#     # if counter==0:
-#     #     x,y,w,h = randomRectangle(display)
-#     # counter = counter+1
 #     if points is not None:
-#         newPoints = []
-#         for point in points:
-#             x, y = point
-#             cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#             # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-#         # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
-
-#         # mapping new xy point
-#         for point in points:
-#             x, y = point
-#             newPoint = []
-#             newX = mappingPointX(frame,display,x)
-#             newY = mappingPointY(frame,display,y)
-#             newPoint.append(newX)
-#             newPoint.append(newY)
-#             newPoints.append(newPoint)
-#         # print("Old point: " + str(points))
-#         # print("New point: " + str(newPoints))
-
-#         for point in newPoints:
-#             x, y = point
-#             cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-
-#         # track the first finger points[8]
-#         xP, yP = newPoints[0]
-#         # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#         # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-#         cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
-#         cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
-
-#         # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
-#         # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
-#         # if isPointIn:
-#         #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
-
 #         # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
 #         distanceFinger = fingerState_distance_ratio(points)
-#         # INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
 #         # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
 #         allDistanceFinger.append(distanceFinger)
-#         print("Dis: " + str(allDistanceFinger))
 
-#         # connection camera screen
-#         for connection in connections:
-#             x0, y0 = points[connection[0]]
-#             x1, y1 = points[connection[1]]
-#             cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+# df = pd.DataFrame(allDistanceFinger, columns=['index', 'middle', 'ring','little'])
+# print(df.describe())
+# # boxplot = df.boxplot(column=['index', 'middle', 'ring','little'])
+# # boxplot
+# colors = ['red', 'tan', 'lime','blue']
+# labels= ['index', 'middle', 'ring','little']
 
-#         # connection display screen
-#         for connection in connections:
-#             x0, y0 = newPoints[connection[0]]
-#             x1, y1 = newPoints[connection[1]]
-#             cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+# kwargs = dict(alpha=0.5, bins=100,histtype='bar')
 
-#     cv2.imshow(WINDOW, frame)
-#     hasFrame, frame = capture.read()
-#     cv2.imshow(WINDOW2,display)
+# # plt.hist(df['index'], **kwargs, color='g', label='indexFinger')
+# # plt.hist(df['middle'], **kwargs, color='b', label='middleFinger')
+# # plt.hist(df['ring'], **kwargs, color='r', label='ringFinger')
+# # plt.hist(df['little'], **kwargs, color='y', label='littleFinger')
 
-#     key = cv2.waitKey(1)
-#     if key == 27:
-#         break
+# plt.hist([df['index'],df['middle'],df['ring'],df['little']],10,density=True,histtype='bar',
+# color=colors,label=labels, density=1)
+# plt.legend()
+# plt.show()
+
+height = frame.shape[0]
+width = frame.shape[1]
+channels = frame.shape[2]
+
+while hasFrame:
+    display = np.zeros((height,width,channels),np.uint8)
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    points, _ = detector(image)
+    # if counter==0:
+    #     x,y,w,h = randomRectangle(display)
+    # counter = counter+1
+    if points is not None:
+        newPoints = []
+        for point in points:
+            x, y = point
+            cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+            # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+        # print(str(distance.euclidean(points[5], points[8]))+" , "+str(distance.euclidean(points[0], points[8])))
+
+        # mapping new xy point
+        for point in points:
+            x, y = point
+            newPoint = []
+            newX = mappingPointX(frame,display,x)
+            newY = mappingPointY(frame,display,y)
+            newPoint.append(newX)
+            newPoint.append(newY)
+            newPoints.append(newPoint)
+        # print("Old point: " + str(points))
+        # print("New point: " + str(newPoints))
+
+        for point in newPoints:
+            x, y = point
+            cv2.circle(display, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+
+        # track the first finger points[8]
+        xP, yP = newPoints[0]
+        # cv2.circle(frame, (int(x), int(y)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+        # cv2.putText(frame, str(int(x))+","+str(int(y)), (int(x)+4, int(y)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+        cv2.circle(display, (int(xP), int(yP)), THICKNESS * 2, POINT_COLOR, THICKNESS)
+        cv2.putText(display, str(int(xP))+","+str(int(yP)), (int(xP)+4, int(yP)+2), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+
+        # cv2.rectangle(display,(90,90),(200,200),(255,0,0), 1, 8)
+        # isPointIn = isHandInRectngle(xP,yP,90,90,200,200)
+        # if isPointIn:
+        #     cv2.putText(display, "Innnnnnnnnnnnnnnnnnn", (10,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 3)
+
+        # THUMB, INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER = finger_state(points)
+        distanceFinger = fingerState_distance_ratio(points)
+        # INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER, distanceFinger = fingerState_distance_ratio(points)
+        # gesture(INDEXFINGER, MIDDLEFINGER, RINGFINGER, LITTLEFINGER,display)
+        allDistanceFinger.append(distanceFinger)
+        print("Dis: " + str(allDistanceFinger))
+
+        # connection camera screen
+        for connection in connections:
+            x0, y0 = points[connection[0]]
+            x1, y1 = points[connection[1]]
+            cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+
+        # connection display screen
+        for connection in connections:
+            x0, y0 = newPoints[connection[0]]
+            x1, y1 = newPoints[connection[1]]
+            cv2.line(display, (int(x0), int(y0)), (int(x1), int(y1)), CONNECTION_COLOR, THICKNESS)
+
+    cv2.imshow(WINDOW, frame)
+    hasFrame, frame = capture.read()
+    cv2.imshow(WINDOW2,display)
+
+    key = cv2.waitKey(1)
+    if key == 27:
+        break
 
 capture.release()
-# cv2.destroyAllWindows()
+cv2.destroyAllWindows()

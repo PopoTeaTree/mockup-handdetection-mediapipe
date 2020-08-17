@@ -134,13 +134,13 @@ class HandTracker():
 
         # finding the best prediction
         probabilities = self._sigm(out_clf)
-        detecion_mask = probabilities > 0.8
+        detecion_mask = probabilities > 0.9
         candidate_detect = out_reg[detecion_mask]
         candidate_anchors = self.anchors[detecion_mask]
         probabilities = probabilities[detecion_mask]
 
         if candidate_detect.shape[0] == 0:
-            print("No hands found")
+            # print("No hands found")
             return None, None, None
 
         # Pick the best bounding box with non maximum suppression
